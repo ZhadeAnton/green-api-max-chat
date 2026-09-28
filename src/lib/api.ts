@@ -79,7 +79,7 @@ export class GreenApi {
     const { apiUrl, idInstance, apiTokenInstance } = this.credentials;
     const timeout = AbortSignal.timeout(options.timeout ?? 25_000);
     const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
-    // Never log the request URL: GREEN-API puts the token in its path.
+    // Avoid logging this URL: GREEN-API puts the token in its path.
     const url = `${apiUrl}/waInstance${idInstance}/${endpoint}/${encodeURIComponent(apiTokenInstance)}${options.suffix ?? ''}`;
     try {
       const response = await this.fetcher(url, {
@@ -241,7 +241,6 @@ export class GreenApi {
     if (!isRecord(response) || typeof response.result !== 'boolean') {
       throw new ApiError('Не удалось подтвердить получение уведомления.');
     }
-    // false also means this receipt was already deleted. Re-fetching is safe;
-    // message IDs are deduplicated before an event is applied to the UI.
+    // A deleted receipt may return false; duplicate notifications are deduplicated by ID.
   }
 }

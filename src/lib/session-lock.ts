@@ -2,7 +2,7 @@ export interface SessionLockProvider {
   request(name: string, options: { signal: AbortSignal }, run: () => Promise<void>): Promise<void>;
 }
 
-/** A queue belongs to the instance, so only one tab on this origin may consume it. */
+/** Prevent two tabs from consuming the same instance queue. */
 export async function withInstanceLock(options: {
   instanceId: string;
   signal: AbortSignal;

@@ -9,8 +9,6 @@ function deferred() {
   return { promise, resolve };
 }
 
-// Node 24.5+ provides the native Web Locks API; older supported Node releases
-// skip the cross-context integration checks while still running the fallback check.
 describe.skipIf(!globalThis.navigator?.locks)('exclusive access to an instance queue', () => {
   it('only starts the second consumer after the first session ends', async () => {
     const instanceId = crypto.randomUUID();

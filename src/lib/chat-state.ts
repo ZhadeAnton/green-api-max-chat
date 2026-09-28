@@ -95,7 +95,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
           chat.messages.some((message) => message.id === event.messageId),
       );
       if (!found) {
-        // Statuses may race with the SendMessage response. Keep a bounded cache.
+        // Status may arrive before the SendMessage response, so cache it briefly.
         const entries = Object.entries(state.earlyStatuses).slice(-199);
         const key = `${event.chatId}:${event.messageId}`;
         return {

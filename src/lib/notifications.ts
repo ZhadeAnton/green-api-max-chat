@@ -35,7 +35,6 @@ export function parseNotification(body: Record<string, unknown>): ChatEvent | nu
   const data = record(body.messageData);
   const chatId = text(sender.chatId);
   const id = text(body.idMessage);
-  // This test assignment supports personal text conversations only.
   if (
     !chatId ||
     !id ||

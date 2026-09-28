@@ -81,7 +81,7 @@ export function useChatSession(session: Session) {
                     }
                   : { status: 'connected' },
               );
-              // Keep consuming state notifications so a restored session can recover.
+              // Keep polling; session authorization may recover.
               return;
             }
             dispatch({
@@ -180,7 +180,7 @@ export function useChatSession(session: Session) {
             }),
           )
           .catch(() => {
-            /* The demo reply is cancelled on logout. */
+            // The demo reply is cancelled on logout.
           });
       }
     } catch (error) {

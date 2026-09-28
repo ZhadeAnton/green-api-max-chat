@@ -7,6 +7,10 @@ export interface NotificationSource {
   acknowledge(receiptId: number, signal: AbortSignal): Promise<void>;
 }
 
+const POLL_INTERVAL_MS = 1000;
+const RETRY_DELAY_BASE_MS = 1500;
+const RETRY_DELAY_MAX_MS = 15_000;
+
 export function abortableDelay(milliseconds: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
@@ -40,7 +44,6 @@ export async function pollNotifications(
   onConnection({ status: 'connecting' });
   while (!signal.aborted) {
     try {
-      // When DELETE fails, retry that receipt before receiving another item.
       if (pendingReceipt !== null) {
         await source.acknowledge(pendingReceipt, signal);
         pendingReceipt = null;
@@ -63,8 +66,7 @@ export async function pollNotifications(
       }
       failures = 0;
       onConnection({ status: 'connected' });
-      // Also bounds the rate when an API returns empty responses immediately.
-      await delay(1000, signal);
+      await delay(POLL_INTERVAL_MS, signal);
     } catch (error) {
       if (signal.aborted) {
         return;
@@ -76,7 +78,10 @@ export async function pollNotifications(
       failures += 1;
       onConnection({ status: 'retrying', message: errorMessage(error) });
       try {
-        await delay(Math.min(1500 * 2 ** (failures - 1), 15_000), signal);
+        await delay(
+          Math.min(RETRY_DELAY_BASE_MS * 2 ** (failures - 1), RETRY_DELAY_MAX_MS),
+          signal,
+        );
       } catch {
         return;
       }

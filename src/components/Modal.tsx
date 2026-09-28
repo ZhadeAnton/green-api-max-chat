@@ -27,7 +27,7 @@ export function Modal({ title, children, onClose, initialFocusRef }: ModalProps)
   }, [initialFocusRef]);
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: Native dialog handles Escape via onCancel; clicks here only dismiss the backdrop.
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Native dialog handles Escape; background clicks close it.
     <dialog
       ref={ref}
       className="modal"
