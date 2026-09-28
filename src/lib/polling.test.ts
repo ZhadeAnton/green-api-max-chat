@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from './api';
-import { abortableDelay, pollNotifications, type NotificationSource } from './polling';
+import { abortableDelay, type NotificationSource, pollNotifications } from './polling';
 
 describe('notification queue lifecycle', () => {
   it('processes a notification once, retries a failed DELETE and only then gets the next item', async () => {
@@ -19,7 +19,9 @@ describe('notification queue lifecycle', () => {
       },
       acknowledge: async (receiptId) => {
         calls.push(`delete:${receiptId}`);
-        if (++acknowledged === 1) throw new ApiError('Temporary outage');
+        if (++acknowledged === 1) {
+          throw new ApiError('Temporary outage');
+        }
       },
     };
     await pollNotifications(source, {
@@ -41,7 +43,9 @@ describe('notification queue lifecycle', () => {
     const source: NotificationSource = {
       receive: async () => {
         calls++;
-        if (calls <= 2) throw new ApiError('Network error');
+        if (calls <= 2) {
+          throw new ApiError('Network error');
+        }
         return null;
       },
       acknowledge: vi.fn(),
@@ -52,7 +56,9 @@ describe('notification queue lifecycle', () => {
       onConnection: connection,
       delay: async (ms) => {
         delays.push(ms);
-        if (delays.length === 3) controller.abort();
+        if (delays.length === 3) {
+          controller.abort();
+        }
       },
     });
     expect(delays).toEqual([1500, 3000, 1000]);

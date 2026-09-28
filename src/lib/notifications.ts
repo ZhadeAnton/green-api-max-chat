@@ -9,16 +9,18 @@ function record(value: unknown): Record<string, unknown> {
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 
 export function parseNotification(body: Record<string, unknown>): ChatEvent | null {
-  if (body.typeWebhook === 'stateInstanceChanged')
+  if (body.typeWebhook === 'stateInstanceChanged') {
     return { kind: 'account', state: text(body.stateInstance) };
+  }
   if (body.typeWebhook === 'outgoingMessageStatus') {
     const statuses: MessageStatus[] = ['sent', 'delivered', 'read', 'failed'];
     if (
       !statuses.includes(body.status as MessageStatus) ||
       !text(body.idMessage) ||
       !text(body.chatId)
-    )
+    ) {
       return null;
+    }
     return {
       kind: 'status',
       messageId: text(body.idMessage),
@@ -26,7 +28,9 @@ export function parseNotification(body: Record<string, unknown>): ChatEvent | nu
       status: body.status as MessageStatus,
     };
   }
-  if (body.typeWebhook !== 'incomingMessageReceived') return null;
+  if (body.typeWebhook !== 'incomingMessageReceived') {
+    return null;
+  }
   const sender = record(body.senderData);
   const data = record(body.messageData);
   const chatId = text(sender.chatId);
@@ -38,15 +42,20 @@ export function parseNotification(body: Record<string, unknown>): ChatEvent | nu
     sender.chatType === 'group' ||
     chatId.startsWith('-') ||
     chatId.endsWith('@g.us')
-  )
+  ) {
     return null;
+  }
   let messageText: string;
-  if (data.typeMessage === 'textMessage')
+  if (data.typeMessage === 'textMessage') {
     messageText = text(record(data.textMessageData).textMessage);
-  else if (data.typeMessage === 'extendedTextMessage')
+  } else if (data.typeMessage === 'extendedTextMessage') {
     messageText = text(record(data.extendedTextMessageData).text);
-  else return null;
-  if (!messageText) return null;
+  } else {
+    return null;
+  }
+  if (!messageText) {
+    return null;
+  }
   const phone =
     typeof sender.senderPhoneNumber === 'number' && sender.senderPhoneNumber > 0
       ? String(sender.senderPhoneNumber)

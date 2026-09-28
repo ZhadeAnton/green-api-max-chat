@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowRight,
   CheckCheck,
@@ -11,13 +10,18 @@ import {
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
+import type { Session } from '../hooks/useChatSession';
 import { DEFAULT_API_URL, GreenApi } from '../lib/api';
 import { errorMessage } from '../lib/format';
-import type { Session } from '../hooks/useChatSession';
-import { Brand } from './Brand';
 import { Avatar } from './Avatar';
+import { Brand } from './Brand';
 
-export function Login({ onStart }: { onStart: (session: Session) => void }) {
+interface LoginProps {
+  onStart: (session: Session) => void;
+}
+
+export function Login({ onStart }: LoginProps) {
   const [idInstance, setIdInstance] = useState('');
   const [token, setToken] = useState('');
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
@@ -25,11 +29,17 @@ export function Login({ onStart }: { onStart: (session: Session) => void }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
-  useEffect(() => () => pending.current?.abort(), []);
+  useEffect(() => {
+    return () => {
+      pending.current?.abort();
+    };
+  }, []);
 
   async function connect(event: FormEvent) {
     event.preventDefault();
-    if (pending.current) return;
+    if (pending.current) {
+      return;
+    }
     const controller = new AbortController();
     pending.current = controller;
     setError('');
@@ -37,12 +47,18 @@ export function Login({ onStart }: { onStart: (session: Session) => void }) {
     try {
       const api = new GreenApi({ idInstance, apiTokenInstance: token, apiUrl });
       await api.connect(controller.signal);
-      if (!controller.signal.aborted) onStart({ kind: 'live', api });
+      if (!controller.signal.aborted) {
+        onStart({ kind: 'live', api });
+      }
     } catch (cause) {
-      if (!controller.signal.aborted) setError(errorMessage(cause));
+      if (!controller.signal.aborted) {
+        setError(errorMessage(cause));
+      }
     } finally {
       pending.current = null;
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }
 
@@ -67,7 +83,7 @@ export function Login({ onStart }: { onStart: (session: Session) => void }) {
           <h1>
             Хороший разговор
             <br />
-            начинается с <span>«привет».</span>
+            начинается с <span className="welcome-highlight">«привет».</span>
           </h1>
           <p className="welcome-copy">
             Ваши чаты в MAX — в простом и уютном
@@ -161,7 +177,7 @@ export function Login({ onStart }: { onStart: (session: Session) => void }) {
             </label>
             <details className="server-settings">
               <summary>
-                Адрес сервера <ChevronDown size={15} />
+                Адрес сервера <ChevronDown className="server-settings-chevron" size={15} />
               </summary>
               <label className="field">
                 apiUrl
@@ -194,6 +210,7 @@ export function Login({ onStart }: { onStart: (session: Session) => void }) {
             <span>или сначала познакомимся</span>
           </div>
           <button
+            type="button"
             className="button button-secondary button-full"
             disabled={loading}
             onClick={() => onStart({ kind: 'demo' })}

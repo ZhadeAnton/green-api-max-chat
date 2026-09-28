@@ -1,4 +1,8 @@
-export function Brand({ compact = false }: { compact?: boolean }) {
+interface BrandProps {
+  compact?: boolean;
+}
+
+export function Brand({ compact = false }: BrandProps) {
   return (
     <div className={`brand ${compact ? 'brand-compact' : ''}`}>
       <svg className="brand-icon" aria-hidden="true" viewBox="0 0 48 48" fill="none">

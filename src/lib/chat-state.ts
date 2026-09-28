@@ -29,27 +29,32 @@ export function advanceStatus(
     delivered: 3,
     read: 4,
   };
-  if (previous === 'read' || previous === 'delivered')
+  if (previous === 'read' || previous === 'delivered') {
     return (rank[next] ?? -1) > (rank[previous] ?? -1) ? next : previous;
-  return (rank[previous ?? 'sending'] ?? -1) > (rank[next] ?? -1) && next !== 'failed'
-    ? previous!
-    : next;
+  }
+  if (previous && (rank[previous] ?? -1) > (rank[next] ?? -1) && next !== 'failed') {
+    return previous;
+  }
+
+  return next;
 }
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
-  if (action.type === 'select')
+  if (action.type === 'select') {
     return {
       ...state,
       activeId: action.chatId,
       chats: state.chats.map((chat) => (chat.id === action.chatId ? { ...chat, unread: 0 } : chat)),
     };
-  if (action.type === 'read')
+  }
+  if (action.type === 'read') {
     return {
       ...state,
       chats: state.chats.map((chat) =>
         chat.id === state.activeId ? { ...chat, unread: 0 } : chat,
       ),
     };
+  }
   if (action.type === 'open') {
     const existing = state.chats.find((chat) => chat.id === action.chatId);
     return {
@@ -76,7 +81,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
   }
   if (action.type === 'event') {
     const event = action.event;
-    if (event.kind === 'account') return state;
+    if (event.kind === 'account') {
+      return state;
+    }
     if (event.kind === 'status') {
       const found = state.chats.some(
         (chat) =>
@@ -113,8 +120,10 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     }
     let chats = state.chats;
     const existing = chats.find((chat) => chat.id === event.chatId);
-    if (existing?.messages.some((message) => message.id === event.message.id)) return state;
-    if (!existing)
+    if (existing?.messages.some((message) => message.id === event.message.id)) {
+      return state;
+    }
+    if (!existing) {
       chats = [
         ...chats,
         {
@@ -126,6 +135,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
           messages: [],
         },
       ];
+    }
     return {
       ...state,
       chats: chats.map((chat) =>
@@ -141,7 +151,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       ),
     };
   }
-  if (action.type === 'send')
+  if (action.type === 'send') {
     return {
       ...state,
       chats: state.chats.map((chat) =>
@@ -150,6 +160,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
           : chat,
       ),
     };
+  }
   if (action.type === 'confirm') {
     const key = `${action.chatId}:${action.messageId}`;
     const earlyStatuses = { ...state.earlyStatuses };
@@ -172,7 +183,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       ),
     };
   }
-  if (action.type === 'fail')
+  if (action.type === 'fail') {
     return {
       ...state,
       chats: state.chats.map((chat) =>
@@ -192,5 +203,6 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
             },
       ),
     };
+  }
   return state;
 }

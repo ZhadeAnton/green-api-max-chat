@@ -10,8 +10,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b",
-    "format": "prettier --write src README.md package.json tsconfig.json vite.config.ts index.html",
-    "format:check": "prettier --check src README.md package.json tsconfig.json vite.config.ts index.html"
+    "lint": "biome lint . --error-on-warnings",
+    "check": "biome check . --error-on-warnings && npm run format:docs:check",
+    "check:fix": "biome check --write .",
+    "format": "biome format --write . && npm run format:docs",
+    "format:check": "biome format . && npm run format:docs:check",
+    "format:docs": "prettier --write \"*.md\" \".github/**/*.yml\"",
+    "format:docs:check": "prettier --check \"*.md\" \".github/**/*.yml\""
   },
   "engines": {
     "node": ">=22.12.0"
@@ -23,6 +28,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

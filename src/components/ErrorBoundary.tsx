@@ -1,7 +1,15 @@
 import { Component, type ReactNode } from 'react';
 
-export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  failed: boolean;
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { failed: false };
 
   static getDerivedStateFromError() {
     return { failed: true };
@@ -13,7 +21,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
         <main className="crash-screen">
           <h1>Не удалось открыть чат</h1>
           <p>Обновите страницу и подключитесь снова.</p>
-          <button className="button button-primary" onClick={() => location.reload()}>
+          <button type="button" className="button button-primary" onClick={() => location.reload()}>
             Обновить страницу
           </button>
         </main>

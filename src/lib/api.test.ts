@@ -152,7 +152,8 @@ describe('MAX phone input', () => {
   it('normalizes Russian and Belarusian numbers without accepting arbitrary strings', () => {
     expect(normalizePhone('8 (900) 123-45-67')).toBe('79001234567');
     expect(normalizePhone('+375 29 123-45-67')).toBe('375291234567');
-    for (const phone of ['', '+7', 'abc79001234567', '+1 234 567 8901'])
+    for (const phone of ['', '+7', 'abc79001234567', '+1 234 567 8901']) {
       expect(() => normalizePhone(phone)).toThrow();
+    }
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { ChatEvent } from '../types';
 import { chatReducer, initialChatState } from './chat-state';
 import { parseNotification } from './notifications';
-import type { ChatEvent } from '../types';
 
 const incoming = {
   typeWebhook: 'incomingMessageReceived',
@@ -16,15 +16,26 @@ const incoming = {
   messageData: { typeMessage: 'textMessage', textMessageData: { textMessage: 'Привет!' } },
 };
 
+function incomingEvent(): ChatEvent {
+  const event = parseNotification(incoming);
+
+  if (!event) {
+    throw new Error('Expected a valid incoming notification.');
+  }
+
+  return event;
+}
+
 describe('message routing and deduplication', () => {
   it('keeps malformed API timestamps from crashing the message list', () => {
     const event = parseNotification({ ...incoming, timestamp: 1e99 });
     expect(event?.kind).toBe('message');
-    if (event?.kind === 'message')
+    if (event?.kind === 'message') {
       expect(Number.isNaN(new Date(event.message.timestamp).getTime())).toBe(false);
+    }
   });
   it('routes a MAX notification by canonical chat ID and does not duplicate redeliveries', () => {
-    const event = parseNotification(incoming)!;
+    const event = incomingEvent();
     const state = chatReducer(initialChatState, { type: 'event', event, visible: true });
     expect(state.chats[0]).toMatchObject({ id: '10000000', phone: '79000000001', unread: 1 });
     const redelivery = chatReducer(state, { type: 'event', event, visible: true });
@@ -40,7 +51,7 @@ describe('message routing and deduplication', () => {
     });
     state = chatReducer(state, {
       type: 'event',
-      event: parseNotification(incoming)!,
+      event: incomingEvent(),
       visible: true,
     });
     expect(state.activeId).toBe('another-chat');
@@ -115,7 +126,7 @@ describe('message routing and deduplication', () => {
   it('opening an existing incoming conversation by phone does not create a duplicate', () => {
     let state = chatReducer(initialChatState, {
       type: 'event',
-      event: parseNotification(incoming)!,
+      event: incomingEvent(),
       visible: false,
     });
     state = chatReducer(state, { type: 'open', chatId: '10000000', phone: '79000000001' });

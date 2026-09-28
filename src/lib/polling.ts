@@ -1,6 +1,6 @@
+import type { Connection, Notification } from '../types';
 import { ApiError } from './api';
 import { errorMessage } from './format';
-import type { Connection, Notification } from '../types';
 
 export interface NotificationSource {
   receive(signal: AbortSignal): Promise<Notification | null>;
@@ -45,13 +45,19 @@ export async function pollNotifications(
         await source.acknowledge(pendingReceipt, signal);
         pendingReceipt = null;
       }
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        return;
+      }
       const notification = await source.receive(signal);
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        return;
+      }
       if (notification) {
         onNotification(notification);
         pendingReceipt = notification.receiptId;
-        if (signal.aborted) return;
+        if (signal.aborted) {
+          return;
+        }
         await source.acknowledge(pendingReceipt, signal);
         pendingReceipt = null;
       }
@@ -60,7 +66,9 @@ export async function pollNotifications(
       // Also bounds the rate when an API returns empty responses immediately.
       await delay(1000, signal);
     } catch (error) {
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        return;
+      }
       if (error instanceof ApiError && !error.retryable) {
         onConnection({ status: 'error', message: error.message });
         return;

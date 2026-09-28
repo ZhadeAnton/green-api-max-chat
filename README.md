@@ -77,6 +77,16 @@ GET `ReceiveNotification` использует `receiveTimeout=25`; клиент
 
 ## Проверки
 
+Для TypeScript, TSX и CSS используется [Biome](https://biomejs.dev/): отступы в два пробела, ширина строки 100 символов, единые кавычки и точки с запятой, сортировка импортов, рекомендуемые проверки, доступность React и явные фигурные скобки. `.editorconfig` задаёт единый формат файла для редакторов. Markdown и YAML форматирует Prettier.
+
+```bash
+npm run check
+npm run format
+npm run lint
+```
+
+GitHub Actions запускает проверку форматирования и линтер перед сборкой и публикацией.
+
 ```bash
 npm test
 npm run build

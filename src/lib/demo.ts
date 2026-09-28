@@ -1,5 +1,5 @@
-import type { ChatState } from './chat-state';
 import type { Message } from '../types';
+import type { ChatState } from './chat-state';
 
 export function createDemoState(): ChatState {
   const now = Date.now();

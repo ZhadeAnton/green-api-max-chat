@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { ApiError, GreenApi } from '../lib/api';
+import { ApiError, type GreenApi } from '../lib/api';
 import { chatReducer, initialChatState } from '../lib/chat-state';
 import { createDemoState } from '../lib/demo';
 import { errorMessage, MESSAGE_LIMIT, normalizePhone } from '../lib/format';
@@ -30,7 +30,9 @@ export function useChatSession(session: Session) {
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && document.hasFocus()) dispatch({ type: 'read' });
+      if (document.visibilityState === 'visible' && document.hasFocus()) {
+        dispatch({ type: 'read' });
+      }
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
@@ -41,7 +43,9 @@ export function useChatSession(session: Session) {
   }, []);
 
   useEffect(() => {
-    if (session.kind === 'demo') return;
+    if (session.kind === 'demo') {
+      return;
+    }
     const controller = new AbortController();
     let accountUnavailable = false;
     const run = async () => {
@@ -51,16 +55,21 @@ export function useChatSession(session: Session) {
           setConnection({ status: 'connecting' });
           await session.api.connect(controller.signal);
         }
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          return;
+        }
         await pollNotifications(session.api, {
           signal: controller.signal,
           onConnection: (next) => {
-            if (!accountUnavailable)
+            if (!accountUnavailable) {
               setConnection(next.status === 'connecting' ? { status: 'connected' } : next);
+            }
           },
           onNotification: (notification) => {
             const event = parseNotification(notification.body);
-            if (!event) return;
+            if (!event) {
+              return;
+            }
             if (event.kind === 'account') {
               accountUnavailable = event.state !== 'authorized';
               setConnection(
@@ -83,7 +92,9 @@ export function useChatSession(session: Session) {
           },
         });
       } finally {
-        if (queueOwner.current === controller) queueOwner.current = null;
+        if (queueOwner.current === controller) {
+          queueOwner.current = null;
+        }
       }
     };
     void withInstanceLock({
@@ -98,8 +109,9 @@ export function useChatSession(session: Session) {
         }),
       run,
     }).catch((error) => {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
         setConnection({ status: 'error', message: errorMessage(error) });
+      }
     });
     return () => controller.abort();
   }, [session, retryKey]);
@@ -112,27 +124,96 @@ export function useChatSession(session: Session) {
       return;
     }
     const sessionSignal = requests.current?.signal;
-    if (!sessionSignal) return;
+    if (!sessionSignal) {
+      return;
+    }
     const combinedSignal = signal ? AbortSignal.any([signal, sessionSignal]) : sessionSignal;
     const chatId =
       session.kind === 'live' ? await session.api.findChat(phone, combinedSignal) : `demo-${phone}`;
-    if (combinedSignal.aborted) return;
+    if (combinedSignal.aborted) {
+      return;
+    }
     dispatch({ type: 'open', chatId, phone });
+  }
+
+  async function deliverMessage(
+    chatId: string,
+    text: string,
+    localId: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    try {
+      let messageId: string;
+      if (session.kind === 'live') {
+        messageId = await session.api.sendMessage(chatId, text, signal);
+      } else {
+        await abortableDelay(400, signal);
+        messageId = `demo-${crypto.randomUUID()}`;
+      }
+      if (signal.aborted) {
+        return;
+      }
+      dispatch({ type: 'confirm', chatId, localId, messageId });
+      if (session.kind === 'demo') {
+        dispatch({
+          type: 'event',
+          visible: true,
+          event: { kind: 'status', chatId, messageId, status: 'read' },
+        });
+        void abortableDelay(900, signal)
+          .then(() =>
+            dispatch({
+              type: 'event',
+              visible: document.visibilityState === 'visible' && document.hasFocus(),
+              event: {
+                kind: 'message',
+                chatId,
+                name: '',
+                phone: '',
+                message: {
+                  id: `demo-reply-${crypto.randomUUID()}`,
+                  text: 'Сообщение получил! Это демоответ. Подключите GREEN-API, чтобы здесь отвечал ваш собеседник из MAX.',
+                  timestamp: Date.now(),
+                  direction: 'incoming',
+                },
+              },
+            }),
+          )
+          .catch(() => {
+            /* The demo reply is cancelled on logout. */
+          });
+      }
+    } catch (error) {
+      if (!signal.aborted) {
+        dispatch({
+          type: 'fail',
+          chatId,
+          localId,
+          error: errorMessage(error),
+          uncertain: !(error instanceof ApiError) || error.status === 0 || error.status >= 500,
+        });
+      }
+    } finally {
+      sending.current.delete(chatId);
+    }
   }
 
   function sendMessage(chatId: string, text: string): boolean {
     const signal = requests.current?.signal;
+    const messageText = text.trim();
+
     if (
       !signal ||
       signal.aborted ||
       (session.kind === 'live' && (!queueOwner.current || queueOwner.current.signal.aborted)) ||
       connection.status === 'error' ||
       connection.status === 'connecting' ||
-      !text.trim() ||
-      text.length > MESSAGE_LIMIT ||
+      !messageText ||
+      messageText.length > MESSAGE_LIMIT ||
       sending.current.has(chatId)
-    )
+    ) {
       return false;
+    }
     sending.current.add(chatId);
     const localId = `local-${crypto.randomUUID()}`;
     dispatch({
@@ -140,65 +221,13 @@ export function useChatSession(session: Session) {
       chatId,
       message: {
         id: localId,
-        text: text.trim(),
+        text: messageText,
         timestamp: Date.now(),
         direction: 'outgoing',
         status: 'sending',
       },
     });
-    void (async () => {
-      try {
-        let messageId: string;
-        if (session.kind === 'live')
-          messageId = await session.api.sendMessage(chatId, text.trim(), signal);
-        else {
-          await abortableDelay(400, signal);
-          messageId = `demo-${crypto.randomUUID()}`;
-        }
-        if (signal.aborted) return;
-        dispatch({ type: 'confirm', chatId, localId, messageId });
-        if (session.kind === 'demo') {
-          dispatch({
-            type: 'event',
-            visible: true,
-            event: { kind: 'status', chatId, messageId, status: 'read' },
-          });
-          void abortableDelay(900, signal)
-            .then(() =>
-              dispatch({
-                type: 'event',
-                visible: document.visibilityState === 'visible' && document.hasFocus(),
-                event: {
-                  kind: 'message',
-                  chatId,
-                  name: '',
-                  phone: '',
-                  message: {
-                    id: `demo-reply-${crypto.randomUUID()}`,
-                    text: 'Сообщение получил! Это демоответ. Подключите GREEN-API, чтобы здесь отвечал ваш собеседник из MAX.',
-                    timestamp: Date.now(),
-                    direction: 'incoming',
-                  },
-                },
-              }),
-            )
-            .catch(() => {
-              /* The demo reply is cancelled on logout. */
-            });
-        }
-      } catch (error) {
-        if (!signal.aborted)
-          dispatch({
-            type: 'fail',
-            chatId,
-            localId,
-            error: errorMessage(error),
-            uncertain: !(error instanceof ApiError) || error.status === 0 || error.status >= 500,
-          });
-      } finally {
-        sending.current.delete(chatId);
-      }
-    })();
+    void deliverMessage(chatId, messageText, localId, signal);
     return true;
   }
 

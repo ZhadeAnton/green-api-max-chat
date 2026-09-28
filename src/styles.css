@@ -1,19 +1,18 @@
-@import '@fontsource/manrope/latin-400.css';
-@import '@fontsource/manrope/cyrillic-400.css';
-@import '@fontsource/manrope/latin-500.css';
-@import '@fontsource/manrope/cyrillic-500.css';
-@import '@fontsource/manrope/latin-600.css';
-@import '@fontsource/manrope/cyrillic-600.css';
-@import '@fontsource/manrope/latin-700.css';
-@import '@fontsource/manrope/cyrillic-700.css';
-@import '@fontsource/manrope/latin-800.css';
-@import '@fontsource/manrope/cyrillic-800.css';
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/cyrillic-400.css";
+@import "@fontsource/manrope/latin-500.css";
+@import "@fontsource/manrope/cyrillic-500.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/cyrillic-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/manrope/cyrillic-700.css";
+@import "@fontsource/manrope/latin-800.css";
+@import "@fontsource/manrope/cyrillic-800.css";
 
 :root {
-  font-family: Manrope, 'Segoe UI', Arial, sans-serif;
+  font-family: Manrope, "Segoe UI", Arial, sans-serif;
   color: #273245;
   background: #f5f6fa;
-  font-synthesis: none;
   font-weight: 500;
   font-size: 14px;
   line-height: 1.6;
@@ -71,8 +70,19 @@ textarea:focus {
   outline: none;
 }
 input:focus-visible {
-  border-color: var(--primary) !important;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px #5877ee14;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 h1,
 h2,
@@ -250,7 +260,7 @@ svg {
   line-height: 1.35;
   margin: 20px 0;
 }
-.welcome-panel h1 > span {
+.welcome-highlight {
   color: var(--primary);
 }
 .welcome-copy {
@@ -444,7 +454,7 @@ svg {
 .server-settings summary::-webkit-details-marker {
   display: none;
 }
-.server-settings[open] summary svg {
+.server-settings[open] .server-settings-chevron {
   transform: rotate(180deg);
 }
 .server-settings .field {
@@ -477,7 +487,7 @@ svg {
 }
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   background: var(--line);
   height: 1px;
   flex: 1;
@@ -654,7 +664,7 @@ svg {
   gap: 9px;
   font-weight: 800;
 }
-.sidebar-header h1 > span {
+.sidebar-header .chat-count {
   font-size: 10px;
   letter-spacing: 0;
   font-weight: 700;
@@ -703,7 +713,7 @@ svg {
   background: transparent;
   color: #526078;
   font-size: 11px;
-  box-shadow: none !important;
+  box-shadow: none;
 }
 .search-field input::placeholder {
   color: #a1aabb;
@@ -713,6 +723,8 @@ svg {
   height: 26px;
 }
 .chat-filters {
+  min-width: 0;
+  border: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -998,7 +1010,7 @@ svg {
   justify-content: center;
   margin: 27px 0 25px;
 }
-.date-separator span {
+.date-separator .date-label {
   font-size: 9px;
   color: #9aa6bd;
   background: #eef2f8;
@@ -1023,7 +1035,7 @@ svg {
   min-width: 90px;
   max-width: min(80%, 480px);
 }
-.message-bubble p {
+.message-text {
   font-size: 14px;
   line-height: 1.8;
   white-space: pre-wrap;
@@ -1035,7 +1047,7 @@ svg {
   border-color: #e2e9fd;
   border-radius: 13px 13px 4px 13px;
 }
-.outgoing .message-bubble p {
+.outgoing .message-text {
   color: #5a6d99;
 }
 .message-meta {
@@ -1063,8 +1075,8 @@ svg {
 .status-failed {
   color: #d58d84;
 }
-.message-failed {
-  border-color: #e4b0ab !important;
+.message-row .message-failed {
+  border-color: #e4b0ab;
 }
 .send-error {
   display: flex;
@@ -1104,8 +1116,8 @@ svg {
 .composer:focus-within {
   border-color: #becbf4;
 }
-.composer-invalid {
-  border-color: #e3aaa8 !important;
+.composer.composer-invalid {
+  border-color: #e3aaa8;
 }
 .composer textarea {
   font-size: 14px;
@@ -1206,7 +1218,7 @@ svg {
   border: 1px solid #e4eaf8;
   transform: rotate(-5deg);
 }
-.empty-illustration span {
+.empty-illustration .empty-wave {
   position: absolute;
   font-size: 30px;
   bottom: -3px;
@@ -1375,7 +1387,7 @@ svg {
   font-size: 10px;
   color: #9ca5b8;
 }
-.connection-details > span {
+.connection-details .connection-detail {
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -1692,7 +1704,7 @@ svg {
     max-width: 86%;
     padding: 10px 13px 6px;
   }
-  .message-bubble p {
+  .message-text {
     font-size: 13px;
   }
   .message-meta {
@@ -1701,7 +1713,7 @@ svg {
   .date-separator {
     margin: 22px 0;
   }
-  .date-separator span {
+  .date-separator .date-label {
     font-size: 10px;
   }
   .composer-wrapper {
@@ -1829,6 +1841,6 @@ svg {
   *,
   *::before,
   *::after {
-    scroll-behavior: auto !important;
+    scroll-behavior: auto;
   }
 }

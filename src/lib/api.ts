@@ -35,10 +35,12 @@ export function validateCredentials(input: Credentials): Credentials {
   }
   const idInstance = input.idInstance.trim();
   const apiTokenInstance = input.apiTokenInstance.trim();
-  if (!/^\d{4,20}$/.test(idInstance))
+  if (!/^\d{4,20}$/.test(idInstance)) {
     throw new Error('idInstance должен содержать от 4 до 20 цифр.');
-  if (!/^[a-zA-Z0-9_-]{8,256}$/.test(apiTokenInstance))
+  }
+  if (!/^[a-zA-Z0-9_-]{8,256}$/.test(apiTokenInstance)) {
     throw new Error('Проверьте apiTokenInstance: скопируйте ключ целиком, без пробелов.');
+  }
   return { apiUrl: url.href.replace(/\/$/, ''), idInstance, apiTokenInstance };
 }
 
@@ -96,26 +98,37 @@ export class GreenApi {
               body: JSON.stringify(options.body),
             }),
       });
-      if (!response.ok) throw httpError(response.status);
+      if (!response.ok) {
+        throw httpError(response.status);
+      }
       const raw = await response.text();
-      if (!raw.trim()) return null;
+      if (!raw.trim()) {
+        return null;
+      }
       try {
         return JSON.parse(raw) as unknown;
       } catch {
         throw new ApiError('GREEN-API вернул некорректный ответ. Попробуйте ещё раз.');
       }
     } catch (error) {
-      if (options.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      if (error instanceof ApiError) throw error;
-      if (timeout.aborted) throw new ApiError('Сервер не ответил вовремя. Проверьте соединение.');
+      if (options.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      if (timeout.aborted) {
+        throw new ApiError('Сервер не ответил вовремя. Проверьте соединение.');
+      }
       throw new ApiError('Не удалось связаться с GREEN-API. Проверьте интернет и адрес сервера.');
     }
   }
 
   async connect(signal?: AbortSignal): Promise<void> {
     const state = await this.request('GET', 'getStateInstance', { signal });
-    if (!isRecord(state) || typeof state.stateInstance !== 'string')
+    if (!isRecord(state) || typeof state.stateInstance !== 'string') {
       throw new ApiError('Не удалось определить состояние инстанса.', 0, false);
+    }
     if (state.stateInstance !== 'authorized') {
       const descriptions: Record<string, string> = {
         notAuthorized: 'Сначала авторизуйте инстанс MAX в личном кабинете GREEN-API.',
@@ -132,26 +145,30 @@ export class GreenApi {
       );
     }
     const settings = await this.request('GET', 'getSettings', { signal });
-    if (!isRecord(settings))
+    if (!isRecord(settings)) {
       throw new ApiError('Не удалось прочитать настройки инстанса.', 0, false);
-    if (settings.typeInstance !== 'v3')
+    }
+    if (settings.typeInstance !== 'v3') {
       throw new ApiError(
         'Для этого приложения нужен инстанс MAX (v3). Выберите его в GREEN-API.',
         0,
         false,
       );
-    if (settings.webhookUrl)
+    }
+    if (settings.webhookUrl) {
       throw new ApiError(
         'Для получения сообщений очистите Webhook URL в настройках инстанса GREEN-API и подождите минуту.',
         0,
         false,
       );
-    if (settings.incomingWebhook !== 'yes')
+    }
+    if (settings.incomingWebhook !== 'yes') {
       throw new ApiError(
         'Включите «Получать уведомления о входящих сообщениях и файлах» в настройках инстанса GREEN-API.',
         0,
         false,
       );
+    }
   }
 
   async findChat(phone: string, signal?: AbortSignal): Promise<string> {
@@ -159,35 +176,41 @@ export class GreenApi {
       body: { phoneNumber: Number(normalizePhone(phone)) },
       signal,
     });
-    if (!isRecord(response)) throw new ApiError('Не удалось проверить номер телефона.');
-    if (response.exist === false)
+    if (!isRecord(response)) {
+      throw new ApiError('Не удалось проверить номер телефона.');
+    }
+    if (response.exist === false) {
       throw new ApiError(
         'Аккаунт MAX не найден. Проверьте номер и доступность поиска по номеру у получателя.',
         0,
         false,
       );
-    if (response.exist !== true || typeof response.chatId !== 'string' || !response.chatId)
+    }
+    if (response.exist !== true || typeof response.chatId !== 'string' || !response.chatId) {
       throw new ApiError(
         'MAX не смог проверить номер. Проверьте состояние инстанса и повторите попытку позднее.',
         0,
         false,
       );
+    }
     return response.chatId;
   }
 
   async sendMessage(chatId: string, text: string, signal?: AbortSignal): Promise<string> {
-    if (!text.trim() || text.length > MESSAGE_LIMIT)
+    if (!text.trim() || text.length > MESSAGE_LIMIT) {
       throw new ApiError(
         `Сообщение должно содержать от 1 до ${MESSAGE_LIMIT} символов.`,
         400,
         false,
       );
+    }
     const response = await this.request('POST', 'sendMessage', {
       body: { chatId, message: text },
       signal,
     });
-    if (!isRecord(response) || typeof response.idMessage !== 'string' || !response.idMessage)
+    if (!isRecord(response) || typeof response.idMessage !== 'string' || !response.idMessage) {
       throw new ApiError('Не удалось подтвердить отправку сообщения. Проверьте переписку в MAX.');
+    }
     return response.idMessage;
   }
 
@@ -197,13 +220,16 @@ export class GreenApi {
       suffix: '?receiveTimeout=25',
       timeout: 35_000,
     });
-    if (response === null) return null;
+    if (response === null) {
+      return null;
+    }
     if (
       !isRecord(response) ||
       !Number.isSafeInteger(response.receiptId) ||
       !isRecord(response.body)
-    )
+    ) {
       throw new ApiError('Неожиданный формат уведомления GREEN-API.', 0, false);
+    }
     return { receiptId: response.receiptId as number, body: response.body };
   }
 
@@ -212,8 +238,9 @@ export class GreenApi {
       signal,
       suffix: `/${receiptId}`,
     });
-    if (!isRecord(response) || typeof response.result !== 'boolean')
+    if (!isRecord(response) || typeof response.result !== 'boolean') {
       throw new ApiError('Не удалось подтвердить получение уведомления.');
+    }
     // false also means this receipt was already deleted. Re-fetching is safe;
     // message IDs are deduplicated before an event is applied to the UI.
   }

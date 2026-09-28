@@ -11,13 +11,17 @@ export async function withInstanceLock(options: {
   run: () => Promise<void>;
 }): Promise<void> {
   const { signal, locks, run } = options;
-  if (signal.aborted) return;
+  if (signal.aborted) {
+    return;
+  }
   if (!locks) {
     await run();
     return;
   }
   options.onWaiting();
   await locks.request(`green-api-max:${options.instanceId}`, { signal }, async () => {
-    if (!signal.aborted) await run();
+    if (!signal.aborted) {
+      await run();
+    }
   });
 }

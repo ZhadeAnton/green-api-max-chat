@@ -5,7 +5,13 @@ export interface Credentials {
 }
 
 export type MessageStatus =
-  'sending' | 'queued' | 'sent' | 'delivered' | 'read' | 'failed' | 'uncertain';
+  | 'sending'
+  | 'queued'
+  | 'sent'
+  | 'delivered'
+  | 'read'
+  | 'failed'
+  | 'uncertain';
 
 export interface Message {
   id: string;
