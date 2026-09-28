@@ -1,5 +1,12 @@
 export const MESSAGE_LIMIT = 4000;
 
+const TIME_FORMATTER = new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit' });
+const DAY_FORMATTER = new Intl.DateTimeFormat('ru', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
 export function normalizePhone(value: string): string {
   if (!/^\+?[\d\s().-]+$/.test(value.trim())) {
     throw new Error('Введите номер телефона, например +7 900 123-45-67.');
@@ -26,8 +33,7 @@ export function formatPhone(phone: string): string {
   return phone ? `+${phone}` : '';
 }
 
-export const formatTime = (timestamp: number) =>
-  new Intl.DateTimeFormat('ru', { hour: '2-digit', minute: '2-digit' }).format(timestamp);
+export const formatTime = (timestamp: number) => TIME_FORMATTER.format(timestamp);
 
 export function formatDay(timestamp: number): string {
   const date = new Date(timestamp);
@@ -41,9 +47,7 @@ export function formatDay(timestamp: number): string {
   if (date.toDateString() === today.toDateString()) {
     return 'Вчера';
   }
-  return new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-    date,
-  );
+  return DAY_FORMATTER.format(date);
 }
 
 export function initials(name: string): string {
