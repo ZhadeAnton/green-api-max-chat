@@ -9,6 +9,14 @@ export interface ChatState {
 
 export const initialChatState: ChatState = { chats: [], activeId: null, earlyStatuses: {} };
 
+const MESSAGE_STATUS_RANK: Partial<Record<MessageStatus, number>> = {
+  sending: 0,
+  queued: 1,
+  sent: 2,
+  delivered: 3,
+  read: 4,
+};
+
 export type ChatAction =
   | { type: 'open'; chatId: string; phone: string; name?: string }
   | { type: 'select'; chatId: string | null }
@@ -22,17 +30,13 @@ export function advanceStatus(
   previous: MessageStatus | undefined,
   next: MessageStatus,
 ): MessageStatus {
-  const rank: Partial<Record<MessageStatus, number>> = {
-    sending: 0,
-    queued: 1,
-    sent: 2,
-    delivered: 3,
-    read: 4,
-  };
+  const previousRank = previous ? (MESSAGE_STATUS_RANK[previous] ?? -1) : -1;
+  const nextRank = MESSAGE_STATUS_RANK[next] ?? -1;
+
   if (previous === 'read' || previous === 'delivered') {
-    return (rank[next] ?? -1) > (rank[previous] ?? -1) ? next : previous;
+    return nextRank > previousRank ? next : previous;
   }
-  if (previous && (rank[previous] ?? -1) > (rank[next] ?? -1) && next !== 'failed') {
+  if (previous && previousRank > nextRank && next !== 'failed') {
     return previous;
   }
 

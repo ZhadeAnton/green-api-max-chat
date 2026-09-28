@@ -31,12 +31,14 @@ export const formatTime = (timestamp: number) =>
 
 export function formatDay(timestamp: number): string {
   const date = new Date(timestamp);
-  if (date.toDateString() === new Date().toDateString()) {
+  const today = new Date();
+
+  if (date.toDateString() === today.toDateString()) {
     return 'Сегодня';
   }
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
+
+  today.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) {
     return 'Вчера';
   }
   return new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric' }).format(

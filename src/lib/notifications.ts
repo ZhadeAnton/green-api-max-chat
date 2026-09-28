@@ -1,9 +1,14 @@
 import type { ChatEvent, MessageStatus } from '../types';
+import { isRecord } from './guards';
+
+const MESSAGE_STATUSES: ReadonlySet<string> = new Set(['sent', 'delivered', 'read', 'failed']);
+
+function isMessageStatus(value: unknown): value is MessageStatus {
+  return typeof value === 'string' && MESSAGE_STATUSES.has(value);
+}
 
 function record(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
+  return isRecord(value) ? value : {};
 }
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
@@ -13,19 +18,14 @@ export function parseNotification(body: Record<string, unknown>): ChatEvent | nu
     return { kind: 'account', state: text(body.stateInstance) };
   }
   if (body.typeWebhook === 'outgoingMessageStatus') {
-    const statuses: MessageStatus[] = ['sent', 'delivered', 'read', 'failed'];
-    if (
-      !statuses.includes(body.status as MessageStatus) ||
-      !text(body.idMessage) ||
-      !text(body.chatId)
-    ) {
+    if (!isMessageStatus(body.status) || !text(body.idMessage) || !text(body.chatId)) {
       return null;
     }
     return {
       kind: 'status',
       messageId: text(body.idMessage),
       chatId: text(body.chatId),
-      status: body.status as MessageStatus,
+      status: body.status,
     };
   }
   if (body.typeWebhook !== 'incomingMessageReceived') {

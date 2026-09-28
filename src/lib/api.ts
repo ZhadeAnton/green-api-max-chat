@@ -1,5 +1,6 @@
 import type { Credentials, Notification } from '../types';
 import { MESSAGE_LIMIT, normalizePhone } from './format';
+import { isRecord } from './guards';
 
 export const DEFAULT_API_URL = 'https://3100.api.green-api.com';
 
@@ -43,9 +44,6 @@ export function validateCredentials(input: Credentials): Credentials {
   }
   return { apiUrl: url.href.replace(/\/$/, ''), idInstance, apiTokenInstance };
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 function httpError(status: number): ApiError {
   const messages: Record<number, string> = {
@@ -223,14 +221,16 @@ export class GreenApi {
     if (response === null) {
       return null;
     }
-    if (
-      !isRecord(response) ||
-      !Number.isSafeInteger(response.receiptId) ||
-      !isRecord(response.body)
-    ) {
+    if (!isRecord(response)) {
       throw new ApiError('Неожиданный формат уведомления GREEN-API.', 0, false);
     }
-    return { receiptId: response.receiptId as number, body: response.body };
+
+    const { receiptId, body } = response;
+    if (typeof receiptId !== 'number' || !Number.isSafeInteger(receiptId) || !isRecord(body)) {
+      throw new ApiError('Неожиданный формат уведомления GREEN-API.', 0, false);
+    }
+
+    return { receiptId, body };
   }
 
   async acknowledge(receiptId: number, signal?: AbortSignal): Promise<void> {
