@@ -1,23 +1,30 @@
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect, useId, useRef } from 'react';
+import { type ReactNode, type RefObject, useEffect, useId, useRef } from 'react';
 
 interface ModalProps {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
-export function Modal({ title, children, onClose }: ModalProps) {
+export function Modal({ title, children, onClose, initialFocusRef }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
-    dialog?.showModal();
-    dialog?.querySelector<HTMLInputElement>('input, textarea')?.focus();
+    if (!dialog) {
+      return;
+    }
 
-    return () => dialog?.close();
-  }, []);
+    dialog.showModal();
+    initialFocusRef?.current?.focus();
+
+    return () => {
+      dialog.close();
+    };
+  }, [initialFocusRef]);
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: Native dialog handles Escape via onCancel; clicks here only dismiss the backdrop.

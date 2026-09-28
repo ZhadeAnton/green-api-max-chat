@@ -29,6 +29,7 @@ export function Login({ onStart }: LoginProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
+
   useEffect(() => {
     return () => {
       pending.current?.abort();
@@ -37,9 +38,11 @@ export function Login({ onStart }: LoginProps) {
 
   async function connect(event: FormEvent) {
     event.preventDefault();
+
     if (pending.current) {
       return;
     }
+
     const controller = new AbortController();
     pending.current = controller;
     setError('');

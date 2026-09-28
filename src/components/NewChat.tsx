@@ -14,11 +14,14 @@ export function NewChat({ onClose, onCreate, demo }: NewChatProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const pending = useRef<AbortController | null>(null);
+  const phoneInput = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     return () => {
       pending.current?.abort();
     };
   }, []);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (pending.current) {
@@ -45,7 +48,7 @@ export function NewChat({ onClose, onCreate, demo }: NewChatProps) {
     }
   }
   return (
-    <Modal title="Новый разговор" onClose={onClose}>
+    <Modal title="Новый разговор" onClose={onClose} initialFocusRef={phoneInput}>
       <div className="modal-symbol">
         <Phone size={25} />
       </div>
@@ -54,6 +57,7 @@ export function NewChat({ onClose, onCreate, demo }: NewChatProps) {
         <label className="field">
           Номер телефона
           <input
+            ref={phoneInput}
             type="tel"
             autoComplete="tel"
             placeholder="+7 900 123-45-67"
