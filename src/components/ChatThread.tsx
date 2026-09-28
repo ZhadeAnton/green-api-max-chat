@@ -57,14 +57,18 @@ export function ChatThread({ chat, draft, onDraft, onSend, onBack, disabled }: C
 
   function submit(event?: FormEvent) {
     event?.preventDefault();
+
     if (!draft.trim() || tooLong || pending || disabled) {
       return;
     }
-    if (onSend(draft)) {
-      onDraft('');
-      textarea.current?.focus();
-      nearBottom.current = true;
+
+    if (!onSend(draft)) {
+      return;
     }
+
+    onDraft('');
+    textarea.current?.focus();
+    nearBottom.current = true;
   }
 
   return (

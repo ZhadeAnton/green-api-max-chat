@@ -11,7 +11,7 @@ import {
   Settings2,
   SquarePen,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type Session, useChatSession } from '../hooks/useChatSession';
 import type { Connection } from '../types';
 import { Brand } from './Brand';
@@ -43,16 +43,19 @@ export function ChatWorkspace({ session, onLogout }: ChatWorkspaceProps) {
   const demo = session.kind === 'demo';
   const unread = state.chats.reduce((sum, chat) => sum + chat.unread, 0);
   const active = state.chats.find((chat) => chat.id === state.activeId);
-  const normalizedQuery = query.toLocaleLowerCase('ru');
-  const queryDigits = query.replace(/\D/g, '');
-  const filtered = state.chats
-    .filter((chat) => {
-      const matchesName = chat.name.toLocaleLowerCase('ru').includes(normalizedQuery);
-      const matchesPhone = queryDigits.length > 0 && chat.phone.includes(queryDigits);
+  const filtered = useMemo(() => {
+    const normalizedQuery = query.toLocaleLowerCase('ru');
+    const queryDigits = query.replace(/\D/g, '');
 
-      return (matchesName || matchesPhone) && (filter === 'all' || chat.unread > 0);
-    })
-    .sort((a, b) => (b.messages.at(-1)?.timestamp ?? 0) - (a.messages.at(-1)?.timestamp ?? 0));
+    return state.chats
+      .filter((chat) => {
+        const matchesName = chat.name.toLocaleLowerCase('ru').includes(normalizedQuery);
+        const matchesPhone = queryDigits.length > 0 && chat.phone.includes(queryDigits);
+
+        return (matchesName || matchesPhone) && (filter === 'all' || chat.unread > 0);
+      })
+      .sort((a, b) => (b.messages.at(-1)?.timestamp ?? 0) - (a.messages.at(-1)?.timestamp ?? 0));
+  }, [filter, query, state.chats]);
   const connectionLabel = demo ? 'Демонстрационный режим' : CONNECTION_LABELS[connection.status];
 
   useEffect(() => {
